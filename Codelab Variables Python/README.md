@@ -1,2 +1,2 @@
 # adaschool
-bootcamp datasciense
+Entregable sobre las variables en Python
