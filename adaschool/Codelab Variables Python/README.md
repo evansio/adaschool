@@ -1,2 +1,0 @@
-# adaschool
-bootcamp datasciense
