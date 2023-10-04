@@ -1,2 +1,2 @@
 # adaschool
-bootcamp datasciense
+Todos los trabajos y asignaciones irán a esta carpeta
