@@ -1,3 +1,18 @@
+"""Parte 5: Limpieza y preparación de datos
+Una vez cargado el csv mediante el request anterior, realiza lo siguiente:
+
+Verificar que no existan valores faltantes
+Verificar que no existan filas repetidas
+Verificar si existen valores atípicos y eliminarlos
+Crear una columna que categorice por edades
+0-12: Niño
+13-19: Adolescente
+20-39: Jóvenes adulto
+40-59: Adulto
+60-...: Adulto mayor
+Guardar el resultado como csv
+Encapsula toda la lógica anterior en una función que reciba un dataframe como entrada."""
+
 import pandas as pd
 import numpy as np
 
@@ -9,7 +24,7 @@ def limpiar_y_preparar_datos(dataframe):
         # Verificar filas repetidas
         print(dataframe.duplicated().sum())
 
-        # Verificar y eliminar valores atípicos (mismo enfoque que el código original)
+        # Verificar y eliminar valores atípicos
         q1 = dataframe["age"].quantile(0.25)
         q3 = dataframe["age"].quantile(0.75)
         iqr = q3 - q1
