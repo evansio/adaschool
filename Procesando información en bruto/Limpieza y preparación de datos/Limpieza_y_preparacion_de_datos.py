@@ -42,7 +42,7 @@ def limpiar_y_preparar_datos(dataframe):
         print(f"Error en la limpieza y preparación de datos: {e}")
 
 # Cargar el archivo CSV descargado anteriormente
-archivo_csv = 'datos.csv'
+archivo_csv = 'datos_descargados.csv'
 datos = pd.read_csv(archivo_csv)
 
 # Llamar a la función con el DataFrame cargado
