@@ -9,68 +9,115 @@ Categorice en grupos
 Exporte un csv resultante
 La url no debe estar definida como una constante en el código, en su lugar usa argumentos por terminal (revisar este enlace) para enviarle la url al programa al ejecutarlo."""
 
+import sys
 import requests
 import pandas as pd
-import numpy as np
-import sys
 
-def descargar_y_procesar_datos(url):
+def descargar_datos(url):
     try:
-        # Realizar un GET request a la URL
-        response = requests.get(url)
-        response.raise_for_status()  # Verificar si la respuesta es exitosa
+        # Realizar la solicitud GET
+        respuesta = requests.get(url)
 
-        # Escribir la respuesta en un archivo CSV
-        with open('datos_descargados.csv', 'w') as archivo_csv:
-            archivo_csv.write(response.text)
-
-        print("Datos descargados y guardados en 'datos_descargados.csv'")
-
-        # Cargar el archivo CSV en un DataFrame
-        df = pd.read_csv('datos_descargados.csv')
-
-        # Verificar valores faltantes, filas repetidas, eliminar valores atípicos y categorizar por edades
-        procesar_dataframe(df)
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error al descargar los datos: {e}")
+        # Verificar si la solicitud fue exitosa (código 200)
+        if respuesta.status_code == 200:
+            return respuesta.text
+        else:
+            print(f'Error al realizar la solicitud. Código de estado: {respuesta.status_code}')
+            return None
     except Exception as e:
-        print(f"Error al procesar el DataFrame: {e}")
+        print(f'Ocurrió un error: {str(e)}')
+        return None
 
-def procesar_dataframe(df):
+def convertir_a_dataframe(datos):
     try:
-        # Verificar valores faltantes
-        if df.isnull().values.any():
-            print("Existen valores faltantes.")
-            # Eliminar valores faltantes
-            df = df.dropna()
-            print("Valores faltantes eliminados.")
-
-        # Verificar filas repetidas
-        if df.duplicated().any():
-            print("Existen filas repetidas.")
-            # Eliminar filas repetidas
-            df = df.drop_duplicates()
-            print("Filas repetidas eliminadas.")
-
-        # Verificar y eliminar valores atípicos
-        # (Ajusta esta parte según la forma en que identificas y manejas los valores atípicos)
-
-        # Crear columna que categorice por edades
-        df['Categoria_Edad'] = pd.cut(df['age'], bins=[0, 12, 19, 39, 59, np.inf], labels=['Niño', 'Adolescente', 'Jóvenes adulto', 'Adulto', 'Adulto mayor'])
-
-        # Guardar el resultado como CSV
-        df.to_csv('datos_procesados.csv', index=False)
-        print("Resultados guardados como 'datos_procesados.csv'.")
-
+        # Convertir los datos a un DataFrame
+        dataframe = pd.read_csv(pd.compat.StringIO(datos))
+        return dataframe
+    except pd.errors.EmptyDataError:
+        print('Los datos descargados están vacíos.')
+        return None
     except Exception as e:
-        print(f"Error al procesar el DataFrame: {e}")
+        print(f'Ocurrió un error al convertir a DataFrame: {str(e)}')
+        return None
+
+def categorizar_y_exportar_csv(dataframe, archivo_resultante):
+    def procesar_datos(dataframe):
+        #1. Verificar que no existan valores faltantes
+        valores_faltantes = dataframe.isnull().any()
+        if valores_faltantes.any():
+            print("Existen valores faltantes en las siguientes columnas:")
+            print(valores_faltantes[valores_faltantes].index.tolist())
+        else:
+            print("No hay valores faltantes en el DataFrame.")
+
+        #2. Verificar que no existan filas repetidas
+        filas_duplicadas = dataframe.duplicated()
+        if filas_duplicadas.any():
+            print("Existen filas duplicadas en el DataFrame.")
+        else:
+            print("No hay filas duplicadas en el DataFrame.")
+
+        # 3. Verificar si existen valores atípicos y eliminarlos
+
+        # Función para identificar y eliminar valores atípicos usando el rango intercuartílico (IQR)
+        def eliminar_valores_atipicos(dataframe, columna):
+            if dataframe[columna].dtype != bool:
+                q1 = dataframe[columna].quantile(0.25)
+                q3 = dataframe[columna].quantile(0.75)
+                iqr = q3 - q1
+                limite_inferior = q1 - 1.5 * iqr
+                limite_superior = q3 + 1.5 * iqr
+                df_filtrado = dataframe[(dataframe[columna] >= limite_inferior) & (dataframe[columna] <= limite_superior)]
+                return df_filtrado
+            else:
+                return dataframe
+
+        # Iterar sobre las columnas del DataFrame y aplicar la función para eliminar valores atípicos
+        for columna in dataframe.columns:
+            df_limpio = eliminar_valores_atipicos(dataframe, columna)
+
+        # 4. Crear una columna que categorice por edades: 0-12: Niño, 13-19: Adolescente, 20-39: Joven adulto,
+        #40-59: Adulto, 60-...: Adulto mayor
+
+        bins = [0, 12, 19, 39, 59, float('inf')]
+        labels = ['Niño', 'Adolescente', 'Joven adulto', 'Adulto', 'Adulto mayor']
+
+        df_limpio['categoria_edad'] = pd.cut(df_limpio['age'], bins=bins, labels=labels, right=False)
+
+        # Mostrar el DataFrame con la nueva columna
+        print(df_limpio)
+        #5. Guardar el resultado como csv. Encapsula toda la lógica anterior en una función que reciba
+        #un dataframe como entrada.
+        df_limpio.to_csv('resultado.csv', index=False)
+
+        return df_limpio
+
+    # Llamada a la función para procesar los datos
+    df_procesado = procesar_datos(dataframe)
+
+
+def main():
+    # Verificar si se proporcionó la URL como argumento
+    if len(sys.argv) != 2:
+        print('Por favor, proporcione la URL como argumento.')
+        return
+
+    # Obtener la URL proporcionada como argumento
+    url_datos = sys.argv[1]
+
+    # Descargar datos
+    datos = descargar_datos(url_datos)
+
+    if datos:
+        # Convertir a DataFrame
+        df = convertir_a_dataframe(datos)
+
+        if df is not None:
+            # Categorizar y exportar a CSV
+            categorizar_y_exportar_csv(df, 'datos_procesados.csv')
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Uso: python procesar_datos.py <url>")
-        sys.exit(1)
-
+    main()
     url_datos = sys.argv[1]
     
     print(f"Procesando datos desde la URL: {url_datos}")
