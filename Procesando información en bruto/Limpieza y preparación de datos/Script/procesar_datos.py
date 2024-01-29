@@ -56,7 +56,7 @@ def procesar_dataframe(df):
     # (Ajusta esta parte según la forma en que identificas y manejas los valores atípicos)
 
     # Crear columna que categorice por edades
-    df['Categoria_Edad'] = pd.cut(df['Edad'], bins=[0, 12, 19, 39, 59, np.inf], labels=['Niño', 'Adolescente', 'Jóvenes adulto', 'Adulto', 'Adulto mayor'])
+    df['Categoria_Edad'] = pd.cut(df['age'], bins=[0, 12, 19, 39, 59, np.inf], labels=['Niño', 'Adolescente', 'Jóvenes adulto', 'Adulto', 'Adulto mayor'])
 
     # Guardar el resultado como CSV
     df.to_csv('datos_procesados.csv', index=False)
