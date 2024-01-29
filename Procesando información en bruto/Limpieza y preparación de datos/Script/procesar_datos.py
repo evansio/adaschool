@@ -63,6 +63,6 @@ def procesar_dataframe(df):
     print("Resultados guardados como 'datos_procesados.csv'.")
 
 # Llamar a la función con la URL proporcionada
-url_datos = "URL_de_tu_dataset_actualizado"
+url_datos = "https://huggingface.co/datasets/mstz/heart_failure/raw/main/heart_failure_clinical_records_dataset.csv"
 descargar_y_procesar_datos(url_datos)
 
